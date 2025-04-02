@@ -27,36 +27,36 @@ FuelFundr aims to **bridge the gap** for students seeking financial support, fos
 ---
 
 ## 🌟 Key Features  
-🔥 **User Authentication & Security**  
+**User Authentication & Security**  
 - Secure **JWT-based authentication** with **cookies** for session management.  
 - **Role-based access control** for admins, donors, and campaign creators.  
 
-🔥 **Smart Wallet System**  
+**Smart Wallet System**  
 - Users can **add, withdraw, and manage funds** securely.  
 - **Transaction history tracking** for full transparency.  
 
-🔥 **Real-Time Donation Updates**  
+**Real-Time Donation Updates**  
 - Live tracking of **funds raised, donor contributions, and campaign progress**.  
 - WebSockets/Firebase ensures **instant updates without refreshing** the page.  
 
-🔥 **Dark-Themed UI with Smooth Animations**  
+**Dark-Themed UI with Smooth Animations**  
 - Aesthetic and **modern dark mode** for **better user experience**.  
 - Uses **Framer Motion** for seamless animations.  
 
-🔥 **Multiple Payment Gateway Support**  
+**Multiple Payment Gateway Support**  
 - Integration with **Razorpay / Stripe** for easy **UPI, Card, and Net Banking payments**.  
 - **Multi-currency support** for global donors.  
 
-🔥 **Campaign Creation & Management**  
+**Campaign Creation & Management**  
 - Users can **create, edit, and delete campaigns** easily.  
 - **Image uploads** for better campaign visibility.  
 - **Sorting and filtering** for better discoverability.  
 
-🔥 **Social Sharing & Community Engagement**  
+**Social Sharing & Community Engagement**  
 - Share campaigns via **social media** for better reach.  
 - Commenting and discussion features to **engage donors**.  
 
-🔥 **Admin Dashboard for Moderation**  
+**Admin Dashboard for Moderation**  
 - **Flagging and reporting system** for fraudulent campaigns.  
 - Analytics dashboard to **monitor overall platform activity**.  
 
