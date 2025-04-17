@@ -1,9 +1,10 @@
 import { dummyusers } from "../dummyUsers.js";
+import bcrypt from "bcrypt";
 
 let userIdCounter = dummyusers.length + 1;
 
 // Register a new user
-export const registerUser = (req, res) => {
+export const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
@@ -16,25 +17,26 @@ export const registerUser = (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
+    const hashedPassword = await bcrypt.hash(password, 10); // Hash with salt rounds = 10
+
     const newUser = {
       id: userIdCounter.toString(),
       name,
       email,
-      password,
+      password: hashedPassword,
     };
 
     dummyusers.push(newUser);
     userIdCounter++;
 
     res.status(201).json({
-      message: "User registered. Check email for verification.",
-      user: newUser,
+      message: "User registered successfully",
+      user: { id: newUser.id, name: newUser.name, email: newUser.email },
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Something went wrong",
-      error: error.message,
-    });
+    res
+      .status(500)
+      .json({ message: "Something went wrong", error: error.message });
   }
 };
 
@@ -44,21 +46,19 @@ export const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     const user = dummyusers.find((u) => u.email === email);
-
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
 
-    if (password === user.password) {
-      res.json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        message: "Login successful",
-      });
-    } else {
-      res.status(401).json({ message: "Invalid email or password" });
+    const isMatch = await bcrypt.compare(password, user.password); // Compare hashed password
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid email or password" });
     }
+
+    res.status(200).json({
+      message: "Login successful",
+      user: { id: user.id, name: user.name, email: user.email },
+    });
   } catch (error) {
     res
       .status(500)
