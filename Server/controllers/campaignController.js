@@ -1,36 +1,134 @@
-const dummyCampaigns = [
-  {
-    _id: "1",
-    title: "Save the Forests",
-    description: "A campaign to protect forests.",
-    createdBy: { name: "Alice Smith", email: "alice@example.com" },
-  },
-  {
-    _id: "2",
-    title: "Clean Ocean Drive",
-    description: "Effort to clean up oceans.",
-    createdBy: { name: "Bob Johnson", email: "bob@example.com" },
-  },
-];
+import { dummyCampaigns } from "../dummyCampaigns.js";
+import { dummyusers } from "../dummyUsers.js";
+import { upload, uploadToCloudinary } from "../middlewares/uploadMiddleware.js";
 
-const getAllCampaigns = async (req, res) => {
+let campaignIdCounter = dummyCampaigns.length + 1;
+
+// Controller to create a new campaign
+export const createCampaign = (req, res) => {
+  upload(req, res, (err) => {
+    if (err) {
+      return res
+        .status(400)
+        .json({ message: "Error uploading image", error: err.message });
+    }
+
+    uploadToCloudinary(req, res, (err) => {
+      if (err) {
+        return res.status(500).json({
+          message: "Error uploading to Cloudinary",
+          error: err.message,
+        });
+      }
+
+      try {
+        const { title, description, targetAmount, deadline, category, user } =
+          req.body;
+
+        if (!user || !user.name || !user.email) {
+          return res
+            .status(400)
+            .json({ message: "User info missing in request" });
+        }
+
+        // Check if a campaign with the same title and user already exists
+        const existingCampaign = dummyCampaigns.find(
+          (campaign) =>
+            campaign.title === title && campaign.createdBy.email === user.email
+        );
+
+        if (existingCampaign) {
+          return res.status(400).json({
+            message: "Campaign already exists with the same title and user",
+          });
+        }
+
+        const imageUrl = req.body.image || null;
+
+        // Create the new campaign object
+        const newCampaign = {
+          id: campaignIdCounter.toString(),
+          title,
+          description,
+          targetAmount,
+          deadline,
+          category,
+          image: imageUrl,
+          createdBy: {
+            name: user.name,
+            email: user.email,
+          },
+        };
+
+        dummyCampaigns.push(newCampaign);
+        campaignIdCounter++;
+
+        res.status(201).json(newCampaign);
+      } catch (error) {
+        res
+          .status(500)
+          .json({ message: "Error creating campaign", error: error.message });
+      }
+    });
+  });
+};
+
+// Controller to donate to a campaign
+export const donateToCampaign = (req, res) => {
+  const { userId, amount } = req.body;
+  const { id: campaignId } = req.params;
+
+  if (!userId || !amount || amount <= 0) {
+    return res.status(400).json({ message: "Invalid donation request" });
+  }
+
+  const user = dummyusers.find((u) => u.id === userId);
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  if (user.walletBalance < amount) {
+    return res.status(400).json({ message: "Insufficient wallet balance" });
+  }
+
+  const campaign = dummyCampaigns.find(
+    (c) => c.id === campaignId || c._id === campaignId
+  );
+  if (!campaign) {
+    return res.status(404).json({ message: "Campaign not found" });
+  }
+
+  user.walletBalance -= amount;
+
+  if (!campaign.raisedAmount) campaign.raisedAmount = 0;
+  campaign.raisedAmount += amount;
+
+  res.status(200).json({
+    message: "Donation successful",
+    donatedTo: campaign.title,
+    donatedAmount: amount,
+    remainingBalance: user.walletBalance,
+    totalRaised: campaign.raisedAmount,
+  });
+};
+
+// Controller to fetch all campaigns
+export const getAllCampaigns = async (req, res) => {
   try {
-    // Simulating DB response
-    res.status(200).json(dummyCampaigns);
+    res.status(200).json(dummyCampaigns); // Return the list of campaigns
   } catch (error) {
     res.status(500).json({ message: "Error fetching campaigns", error });
   }
 };
 
-const getCampaignById = async (req, res) => {
+// Controller to fetch a single campaign by its ID
+export const getCampaignById = async (req, res) => {
   try {
-    const campaign = dummyCampaigns.find((c) => c._id === req.params.id);
+    const campaign = dummyCampaigns.find((c) => c.id === req.params.id);
     if (!campaign)
       return res.status(404).json({ message: "Campaign not found" });
-    res.status(200).json(campaign);
+    res.status(200).json(campaign); // Return the campaign details
   } catch (error) {
     res.status(500).json({ message: "Error fetching campaign", error });
   }
 };
-
-export default { getAllCampaigns, getCampaignById };

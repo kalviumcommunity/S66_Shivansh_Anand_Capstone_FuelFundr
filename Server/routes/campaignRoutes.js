@@ -1,9 +1,17 @@
 import express from "express";
-import campaignController from "../controllers/campaignController.js";
+import {
+  getAllCampaigns,
+  getCampaignById,
+  createCampaign,
+  donateToCampaign,
+} from "../controllers/campaignController.js";
 
 const router = express.Router();
 
-router.get("/", campaignController.getAllCampaigns);
-router.get("/:id", campaignController.getCampaignById);
+router.get("/", getAllCampaigns);
+router.get("/:id", getCampaignById);
+
+router.post("/create", createCampaign);
+router.post("/:id/donate", donateToCampaign);
 
 export default router;
