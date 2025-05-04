@@ -58,6 +58,8 @@ export const createCampaign = (req, res) => {
             name: user.name,
             email: user.email,
           },
+          raisedAmount: 0,
+          status: "active",
         };
 
         dummyCampaigns.push(newCampaign);
@@ -119,6 +121,61 @@ export const getAllCampaigns = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Error fetching campaigns", error });
   }
+};
+
+export const updateCampaignInfo = (req, res) => {
+  const { id } = req.params;
+  const { title, description, targetAmount, deadline, category } = req.body;
+
+  const campaign = dummyCampaigns.find((c) => c.id === id);
+  if (!campaign) return res.status(404).json({ message: "Campaign not found" });
+
+  // Validation
+  if (title && typeof title !== "string") {
+    return res.status(400).json({ message: "Title must be a string" });
+  }
+  if (description && typeof description !== "string") {
+    return res.status(400).json({ message: "Description must be a string" });
+  }
+  if (targetAmount !== undefined) {
+    const amount = Number(targetAmount);
+    if (isNaN(amount) || amount <= 0) {
+      return res
+        .status(400)
+        .json({ message: "Target amount must be a positive number" });
+    }
+    campaign.targetAmount = amount;
+  }
+  if (deadline && isNaN(Date.parse(deadline))) {
+    return res.status(400).json({ message: "Deadline must be a valid date" });
+  }
+  if (category && typeof category !== "string") {
+    return res.status(400).json({ message: "Category must be a string" });
+  }
+
+  // Apply valid updates
+  if (title) campaign.title = title;
+  if (description) campaign.description = description;
+  if (deadline) campaign.deadline = deadline;
+  if (category) campaign.category = category;
+
+  res.status(200).json({ message: "Campaign updated", campaign });
+};
+
+export const updateCampaignStatus = (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  const campaign = dummyCampaigns.find((c) => c.id === id);
+  if (!campaign) return res.status(404).json({ message: "Campaign not found" });
+
+  if (!["active", "completed", "paused"].includes(status)) {
+    return res.status(400).json({ message: "Invalid status" });
+  }
+
+  campaign.status = status;
+
+  res.status(200).json({ message: "Campaign status updated", campaign });
 };
 
 // Controller to fetch a single campaign by its ID

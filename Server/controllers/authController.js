@@ -24,6 +24,8 @@ export const registerUser = async (req, res) => {
       name,
       email,
       password: hashedPassword,
+      walletBalance: 0,
+      nameChanged: false,
     };
 
     dummyusers.push(newUser);
@@ -38,6 +40,22 @@ export const registerUser = async (req, res) => {
       .status(500)
       .json({ message: "Something went wrong", error: error.message });
   }
+};
+
+export const updateUserNameOnce = (req, res) => {
+  const { userId, newName } = req.body;
+
+  const user = dummyusers.find((u) => u.id === userId);
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  if (user.nameChanged) {
+    return res.status(400).json({ message: "Name can only be changed once" });
+  }
+
+  user.name = newName;
+  user.nameChanged = true;
+
+  res.status(200).json({ message: "Name updated successfully", user });
 };
 
 // Login user and validate credentials
