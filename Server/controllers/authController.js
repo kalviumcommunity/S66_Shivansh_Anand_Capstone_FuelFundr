@@ -42,6 +42,7 @@ export const registerUser = async (req, res) => {
   }
 };
 
+//update username
 export const updateUserNameOnce = (req, res) => {
   const { userId, newName } = req.body;
 
