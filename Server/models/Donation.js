@@ -12,7 +12,7 @@ const donationSchema = new mongoose.Schema(
       ref: "Campaign",
       required: true,
     },
-    amount: { type: Number, required: true },
+    amount: { type: Number, required: true, min: 1 },
   },
   { timestamps: true }
 );

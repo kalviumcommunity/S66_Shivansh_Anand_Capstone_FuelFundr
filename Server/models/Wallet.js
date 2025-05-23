@@ -3,11 +3,11 @@ import mongoose from "mongoose";
 const walletSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    balance: { type: Number, default: 0 },
     transactions: [
       {
         type: {
           type: String,
-          enum: ["AddFunds", "Donate"],
           required: true,
         },
         amount: { type: Number, required: true },

@@ -10,11 +10,15 @@ const campaignSchema = new mongoose.Schema(
       enum: ["Startup", "Hackathon", "Innovation"],
       required: true,
     },
-    targetAmount: { type: Number, required: true },
+    targetAmount: {
+      type: Number,
+      required: true,
+      min: [100, "Target amount must be at least $100"],
+    },
     deadline: { type: Date, required: true },
     image: { type: String },
     video: { type: String },
-    raisedAmount: { type: Number, default: 0 },
+    raisedAmount: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true }
 );
