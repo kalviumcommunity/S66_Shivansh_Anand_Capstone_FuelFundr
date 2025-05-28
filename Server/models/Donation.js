@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const donationSchema = new mongoose.Schema(
+const DonationSchema = new mongoose.Schema(
   {
     donor: {
       type: mongoose.Schema.Types.ObjectId,
@@ -17,5 +17,5 @@ const donationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Donation = mongoose.model("Donation", donationSchema);
+const Donation = mongoose.model("Donation", DonationSchema);
 export default Donation;

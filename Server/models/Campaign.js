@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const campaignSchema = new mongoose.Schema(
+const CampaignSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     title: { type: String, required: true },
@@ -23,5 +23,5 @@ const campaignSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Campaign = mongoose.model("Campaign", campaignSchema);
+const Campaign = mongoose.model("Campaign", CampaignSchema);
 export default Campaign;

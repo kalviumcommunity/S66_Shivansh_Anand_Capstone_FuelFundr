@@ -109,7 +109,7 @@ export const withdrawFunds = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: `Withdrawn ₹${amount} from wallet`,
+      message: `Withdrawn $${amount} from wallet`,
       balance: wallet.balance,
       transactions: wallet.transactions,
     });
