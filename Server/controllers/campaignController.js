@@ -47,6 +47,16 @@ export const createCampaign = async (req, res) => {
           return res.status(400).json({ message: "Missing required fields" });
         }
 
+        // Validate deadline is a future date
+        const now = new Date();
+        const campaignDeadline = new Date(deadline);
+
+        if (campaignDeadline <= now) {
+          return res.status(400).json({
+            message: "Deadline must be a future date",
+          });
+        }
+
         // Create new campaign document
         const newCampaign = new Campaign({
           user: user._id,
