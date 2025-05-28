@@ -3,16 +3,18 @@ import { configDotenv } from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
 import campaignRoutes from "./routes/campaignRoutes.js";
 import walletRoutes from "./routes/walletRoutes.js";
+import connectDB from "./config/db.js";
 
 configDotenv();
 const app = express();
 app.use(express.json());
 const PORT = process.env.PORT || 2727;
 
+connectDB();
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/wallet", walletRoutes);
-
 app.use("/api/campaigns", campaignRoutes);
 
 // Default Route

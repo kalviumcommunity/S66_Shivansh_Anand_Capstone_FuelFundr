@@ -18,7 +18,7 @@ const upload = multer({ storage: storage }).single("image"); // Matches the fiel
 
 // Cloudinary upload function
 const uploadToCloudinary = (req, res, next) => {
-  if (!req.file) return next(); // Skip if no file is uploaded
+  if (!req.file) return next();
 
   cloudinary.uploader
     .upload_stream({ folder: "campaigns_images" }, (error, result) => {
