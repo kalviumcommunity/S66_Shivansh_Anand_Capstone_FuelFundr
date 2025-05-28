@@ -40,26 +40,30 @@ export const addFunds = async (req, res) => {
         .json({ success: false, message: "Invalid amount" });
     }
 
-    let wallet = await Wallet.findOne({ user: userId });
-    if (!wallet) {
-      // Create wallet if not found
-      wallet = new Wallet({ user: userId, balance: 0, transactions: [] });
-    }
-
-    // Update balance atomically & add transaction
-    wallet.balance += amount;
-    wallet.transactions.push({
-      type: "deposit",
-      amount,
-    });
-
-    await wallet.save();
+    // Atomically update balance and push transaction
+    const updatedWallet = await Wallet.findOneAndUpdate(
+      { user: userId },
+      {
+        $inc: { balance: amount },
+        $push: {
+          transactions: {
+            type: "deposit",
+            amount,
+            date: new Date(),
+          },
+        },
+      },
+      {
+        new: true, 
+        upsert: true, 
+      }
+    );
 
     res.status(200).json({
       success: true,
       message: `Added $${amount} to wallet`,
-      balance: wallet.balance,
-      transactions: wallet.transactions,
+      balance: updatedWallet.balance,
+      transactions: updatedWallet.transactions,
     });
   } catch (error) {
     res.status(500).json({
