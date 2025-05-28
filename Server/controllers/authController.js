@@ -1,104 +1,112 @@
-import { dummyusers } from "../dummyUsers.js";
+import User from "../models/User.js";
 import bcrypt from "bcrypt";
+import Wallet from "../models/Wallet.js";
 
-let userIdCounter = dummyusers.length + 1;
-
-// Register a new user
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    let { name, email, password } = req.body;
 
     if (!name || !email || !password) {
-      return res.status(400).json({ message: "All fields are required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "All fields are required" });
     }
 
-    const userExists = dummyusers.find((user) => user.email === email);
+    name = name.trim();
+    email = email.trim().toLowerCase();
+
+    const emailRegex = /^\S+@\S+\.\S+$/;
+    if (!emailRegex.test(email)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid email format" });
+    }
+
+    const userExists = await User.findOne({ email });
     if (userExists) {
-      return res.status(400).json({ message: "User already exists" });
+      return res
+        .status(400)
+        .json({ success: false, message: "User already exists" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10); // Hash with salt rounds = 10
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = {
-      id: userIdCounter.toString(),
-      name,
-      email,
-      password: hashedPassword,
-      walletBalance: 0,
-      nameChanged: false,
-    };
+    const newUser = new User({ name, email, password: hashedPassword });
+    await newUser.save();
 
-    dummyusers.push(newUser);
-    userIdCounter++;
+    // Optionally create wallet on signup
+    const newWallet = new Wallet({ user: newUser._id });
+    await newWallet.save();
 
     res.status(201).json({
+      success: true,
       message: "User registered successfully",
-      user: { id: newUser.id, name: newUser.name, email: newUser.email },
+      user: { id: newUser._id, name: newUser.name, email: newUser.email },
+      wallet: { id: newWallet._id, balance: newWallet.balance },
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Something went wrong", error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong during registration",
+      error: error.message,
+    });
   }
 };
 
-//update username
-export const updateUserNameOnce = (req, res) => {
-  const { userId, newName } = req.body;
-
-  const user = dummyusers.find((u) => u.id === userId);
-  if (!user) return res.status(404).json({ message: "User not found" });
-
-  if (user.nameChanged) {
-    return res.status(400).json({ message: "Name can only be changed once" });
-  }
-
-  user.name = newName;
-  user.nameChanged = true;
-
-  res.status(200).json({ message: "Name updated successfully", user });
-};
-
-// Login user and validate credentials
 export const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
 
-    const user = dummyusers.find((u) => u.email === email);
-    if (!user) {
-      return res.status(401).json({ message: "User not found" });
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Email and password are required" });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password); // Compare hashed password
+    email = email.trim().toLowerCase();
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res
+        .status(401)
+        .json({ success: false, message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid email or password" });
     }
 
     res.status(200).json({
+      success: true,
       message: "Login successful",
-      user: { id: user.id, name: user.name, email: user.email },
+      user: { id: user._id, name: user.name, email: user.email },
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Something went wrong", error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong during login",
+      error: error.message,
+    });
   }
 };
 
-// Fetch all users with limited details
-export const getAllUsers = (req, res) => {
+export const getAllUsers = async (req, res) => {
   try {
-    const filteredUsers = dummyusers.map((user) => ({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      walletBalance: user.walletBalance,
-    }));
+    const users = await User.find()
+      .select("-otpExpires -otp -password")
+      .sort({ createdAt: -1 });
 
-    res.status(200).json(filteredUsers);
+    res.status(200).json({
+      success: true,
+      users,
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Failed to fetch users", error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch users",
+      error: error.message,
+    });
   }
 };

@@ -1,19 +1,17 @@
-import { dummyCampaigns } from "../dummyCampaigns.js";
-import { dummyusers } from "../dummyUsers.js";
+import Campaign from "../models/Campaign.js";
+import Wallet from "../models/Wallet.js";
 import { upload, uploadToCloudinary } from "../middlewares/uploadMiddleware.js";
 
-let campaignIdCounter = dummyCampaigns.length + 1;
-
-// Controller to create a new campaign
-export const createCampaign = (req, res) => {
-  upload(req, res, (err) => {
+// Create a new campaign
+export const createCampaign = async (req, res) => {
+  upload(req, res, async (err) => {
     if (err) {
       return res
         .status(400)
         .json({ message: "Error uploading image", error: err.message });
     }
 
-    uploadToCloudinary(req, res, (err) => {
+    uploadToCloudinary(req, res, async (err) => {
       if (err) {
         return res.status(500).json({
           message: "Error uploading to Cloudinary",
@@ -25,18 +23,17 @@ export const createCampaign = (req, res) => {
         const { title, description, targetAmount, deadline, category, user } =
           req.body;
 
-        if (!user || !user.name || !user.email) {
+        if (!user || !user._id) {
           return res
             .status(400)
-            .json({ message: "User info missing in request" });
+            .json({ message: "User ID missing in request" });
         }
 
-        // Check if a campaign with the same title and user already exists
-        const existingCampaign = dummyCampaigns.find(
-          (campaign) =>
-            campaign.title === title && campaign.createdBy.email === user.email
-        );
-
+        // Check if campaign with same title and user exists in DB
+        const existingCampaign = await Campaign.findOne({
+          title,
+          user: user._id,
+        });
         if (existingCampaign) {
           return res.status(400).json({
             message: "Campaign already exists with the same title and user",
@@ -45,27 +42,30 @@ export const createCampaign = (req, res) => {
 
         const imageUrl = req.body.image || null;
 
-        // Create the new campaign object
-        const newCampaign = {
-          id: campaignIdCounter.toString(),
+        // Validate required fields if needed (or rely on Mongoose validation)
+        if (!title || !description || !targetAmount || !deadline || !category) {
+          return res.status(400).json({ message: "Missing required fields" });
+        }
+
+        // Create new campaign document
+        const newCampaign = new Campaign({
+          user: user._id,
           title,
           description,
           targetAmount,
           deadline,
           category,
           image: imageUrl,
-          createdBy: {
-            name: user.name,
-            email: user.email,
-          },
           raisedAmount: 0,
-          status: "active",
-        };
+        });
 
-        dummyCampaigns.push(newCampaign);
-        campaignIdCounter++;
+        await newCampaign.save();
 
-        res.status(201).json(newCampaign);
+        res.status(201).json({
+          success: true,
+          message: "Campaign created successfully",
+          campaign: newCampaign,
+        });
       } catch (error) {
         res
           .status(500)
@@ -75,117 +75,86 @@ export const createCampaign = (req, res) => {
   });
 };
 
-// Controller to donate to a campaign
-export const donateToCampaign = (req, res) => {
-  const { userId, amount } = req.body;
-  const { id: campaignId } = req.params;
+// Donate to a campaign (wallet + campaign update)
+export const donateToCampaign = async (req, res) => {
+  try {
+    const { userId, amount } = req.body;
+    const { id: campaignId } = req.params;
 
-  if (!userId || !amount || amount <= 0) {
-    return res.status(400).json({ message: "Invalid donation request" });
+    if (!userId || !amount || amount <= 0) {
+      return res.status(400).json({ message: "Invalid donation request" });
+    }
+
+    // Find user wallet
+    const wallet = await Wallet.findOne({ user: userId });
+    if (!wallet) {
+      return res.status(404).json({ message: "Wallet not found for user" });
+    }
+
+    if (wallet.balance < amount) {
+      return res.status(400).json({ message: "Insufficient wallet balance" });
+    }
+
+    // Find campaign
+    const campaign = await Campaign.findById(campaignId);
+    if (!campaign) {
+      return res.status(404).json({ message: "Campaign not found" });
+    }
+
+    // Deduct amount from wallet
+    wallet.balance -= amount;
+    wallet.transactions.push({
+      type: "withdrawal",
+      amount,
+      timestamp: new Date(),
+    });
+    await wallet.save();
+
+    // Add amount to campaign raisedAmount
+    campaign.raisedAmount += amount;
+    await campaign.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Donation successful",
+      donatedTo: campaign.title,
+      donatedAmount: amount,
+      remainingBalance: wallet.balance,
+      totalRaised: campaign.raisedAmount,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error processing donation", error: error.message });
   }
-
-  const user = dummyusers.find((u) => u.id === userId);
-  if (!user) {
-    return res.status(404).json({ message: "User not found" });
-  }
-
-  if (user.walletBalance < amount) {
-    return res.status(400).json({ message: "Insufficient wallet balance" });
-  }
-
-  const campaign = dummyCampaigns.find(
-    (c) => c.id === campaignId || c._id === campaignId
-  );
-  if (!campaign) {
-    return res.status(404).json({ message: "Campaign not found" });
-  }
-
-  user.walletBalance -= amount;
-
-  if (!campaign.raisedAmount) campaign.raisedAmount = 0;
-  campaign.raisedAmount += amount;
-
-  res.status(200).json({
-    message: "Donation successful",
-    donatedTo: campaign.title,
-    donatedAmount: amount,
-    remainingBalance: user.walletBalance,
-    totalRaised: campaign.raisedAmount,
-  });
 };
 
-// Controller to fetch all campaigns
+// Fetch all campaigns
 export const getAllCampaigns = async (req, res) => {
   try {
-    res.status(200).json(dummyCampaigns); // Return the list of campaigns
+    const campaigns = await Campaign.find().populate("user", "name email");
+    res.status(200).json({ success: true, campaigns });
   } catch (error) {
-    res.status(500).json({ message: "Error fetching campaigns", error });
+    res
+      .status(500)
+      .json({ message: "Error fetching campaigns", error: error.message });
   }
 };
 
-export const updateCampaignInfo = (req, res) => {
-  const { id } = req.params;
-  const { title, description, targetAmount, deadline, category } = req.body;
-
-  const campaign = dummyCampaigns.find((c) => c.id === id);
-  if (!campaign) return res.status(404).json({ message: "Campaign not found" });
-
-  // Validation
-  if (title && typeof title !== "string") {
-    return res.status(400).json({ message: "Title must be a string" });
-  }
-  if (description && typeof description !== "string") {
-    return res.status(400).json({ message: "Description must be a string" });
-  }
-  if (targetAmount !== undefined) {
-    const amount = Number(targetAmount);
-    if (isNaN(amount) || amount <= 0) {
-      return res
-        .status(400)
-        .json({ message: "Target amount must be a positive number" });
-    }
-    campaign.targetAmount = amount;
-  }
-  if (deadline && isNaN(Date.parse(deadline))) {
-    return res.status(400).json({ message: "Deadline must be a valid date" });
-  }
-  if (category && typeof category !== "string") {
-    return res.status(400).json({ message: "Category must be a string" });
-  }
-
-  // Apply valid updates
-  if (title) campaign.title = title;
-  if (description) campaign.description = description;
-  if (deadline) campaign.deadline = deadline;
-  if (category) campaign.category = category;
-
-  res.status(200).json({ message: "Campaign updated", campaign });
-};
-
-export const updateCampaignStatus = (req, res) => {
-  const { id } = req.params;
-  const { status } = req.body;
-
-  const campaign = dummyCampaigns.find((c) => c.id === id);
-  if (!campaign) return res.status(404).json({ message: "Campaign not found" });
-
-  if (!["active", "completed", "paused"].includes(status)) {
-    return res.status(400).json({ message: "Invalid status" });
-  }
-
-  campaign.status = status;
-
-  res.status(200).json({ message: "Campaign status updated", campaign });
-};
-
-// Controller to fetch a single campaign by its ID
+// Get campaign by ID
 export const getCampaignById = async (req, res) => {
   try {
-    const campaign = dummyCampaigns.find((c) => c.id === req.params.id);
-    if (!campaign)
+    const campaign = await Campaign.findById(req.params.id).populate(
+      "user",
+      "name email"
+    );
+    if (!campaign) {
       return res.status(404).json({ message: "Campaign not found" });
-    res.status(200).json(campaign); // Return the campaign details
+    }
+    res.status(200).json({ success: true, campaign });
   } catch (error) {
-    res.status(500).json({ message: "Error fetching campaign", error });
+    res
+      .status(500)
+      .json({ message: "Error fetching campaign", error: error.message });
   }
 };
