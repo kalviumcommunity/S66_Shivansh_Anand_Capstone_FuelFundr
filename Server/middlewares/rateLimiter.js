@@ -8,7 +8,7 @@ export const authLimiter = rateLimit({
 
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 100,
   message: "Too many requests from this IP, please slow down",
 });
 
@@ -20,6 +20,6 @@ export const donationLimiter = rateLimit({
 
 export const walletLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 3,
+  max: 20,
   message: "Too many wallet operations from this IP, please try again later.",
 });
