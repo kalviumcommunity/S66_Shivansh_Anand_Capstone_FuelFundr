@@ -5,6 +5,7 @@ import {
   createCampaign,
   donateToCampaign,
 } from "../controllers/campaignController.js";
+import { donationLimiter } from "../middlewares/rateLimiter.js";
 
 const router = express.Router();
 
@@ -14,6 +15,6 @@ router.get("/:id", getCampaignById);
 
 //POST Request
 router.post("/create", createCampaign);
-router.post("/:id/donate", donateToCampaign);
+router.post("/:id/donate", donationLimiter, donateToCampaign);
 
 export default router;

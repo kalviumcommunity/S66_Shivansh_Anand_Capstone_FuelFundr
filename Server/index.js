@@ -4,6 +4,7 @@ import authRoutes from "./routes/authRoutes.js";
 import campaignRoutes from "./routes/campaignRoutes.js";
 import walletRoutes from "./routes/walletRoutes.js";
 import connectDB from "./config/db.js";
+import { apiLimiter } from "./middlewares/rateLimiter.js";
 
 configDotenv();
 const app = express();
@@ -11,6 +12,8 @@ app.use(express.json());
 const PORT = process.env.PORT || 2727;
 
 connectDB();
+
+app.use(apiLimiter);
 
 // Routes
 app.use("/api/auth", authRoutes);
