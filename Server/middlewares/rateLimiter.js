@@ -4,6 +4,7 @@ export const authLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
   max: 5,
   message: "Too many attempts from this IP, please try again after 10 minutes",
+  skipSuccessfulRequests: true,
 });
 
 export const apiLimiter = rateLimit({
