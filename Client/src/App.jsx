@@ -11,7 +11,7 @@ const App = () => {
     <>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/campaign/aplha" element={<AlphaCampaign />} />
+        <Route path="/campaign/alpha" element={<AlphaCampaign />} />
         <Route path="/campaign/beta" element={<BetaCampaign />} />
         <Route path="/campaign/gamma" element={<GammaCampaign />} />
         <Route path="/create-campaign" element={<CreateCampaignForm />} />
