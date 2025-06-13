@@ -176,3 +176,6 @@ FuelFundr aims to **bridge the gap** for students seeking financial support, fos
 ✅ **Day 27-28:** **Final Adjustments & Submission**.  
 
 ---
+
+### **Frontend Deployed Link**
+-> https://fuelfundr.netlify.app/
