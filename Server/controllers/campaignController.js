@@ -20,31 +20,25 @@ export const createCampaign = async (req, res) => {
       }
 
       try {
-        const { title, description, targetAmount, deadline, category, user } =
+        const { title, description, targetAmount, deadline, category } =
           req.body;
+        
+        const userId = req.userId;
 
-        if (!user || !user._id) {
-          return res
-            .status(400)
-            .json({ message: "User ID missing in request" });
+        // Validate required fields if needed (or rely on Mongoose validation)
+        if (!title || !description || !targetAmount || !deadline || !category) {
+          return res.status(400).json({ message: "Missing required fields" });
         }
 
         // Check if campaign with same title and user exists in DB
         const existingCampaign = await Campaign.findOne({
           title,
-          user: user._id,
+          user: userId,
         });
         if (existingCampaign) {
           return res.status(400).json({
-            message: "Campaign already exists with the same title and user",
+            message: "You already have a campaign with this title",
           });
-        }
-
-        const imageUrl = req.body.image || null;
-
-        // Validate required fields if needed (or rely on Mongoose validation)
-        if (!title || !description || !targetAmount || !deadline || !category) {
-          return res.status(400).json({ message: "Missing required fields" });
         }
 
         // Validate deadline is a future date
@@ -57,9 +51,11 @@ export const createCampaign = async (req, res) => {
           });
         }
 
+        const imageUrl = req.body.image || null;
+
         // Create new campaign document
         const newCampaign = new Campaign({
-          user: user._id,
+          user: userId,
           title,
           description,
           targetAmount,
@@ -88,10 +84,15 @@ export const createCampaign = async (req, res) => {
 // Donate to a campaign (wallet + campaign update)
 export const donateToCampaign = async (req, res) => {
   try {
-    const { userId, amount } = req.body;
+    const userId = req.userId;
+    const { amount } = req.body;
     const { id: campaignId } = req.params;
 
-    if (!userId || !amount || amount <= 0) {
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized user" });
+    }
+
+    if (!amount || amount <= 0) {
       return res.status(400).json({ message: "Invalid donation request" });
     }
 
@@ -158,9 +159,11 @@ export const getCampaignById = async (req, res) => {
       "user",
       "name email"
     );
+
     if (!campaign) {
       return res.status(404).json({ message: "Campaign not found" });
     }
+
     res.status(200).json({ success: true, campaign });
   } catch (error) {
     res

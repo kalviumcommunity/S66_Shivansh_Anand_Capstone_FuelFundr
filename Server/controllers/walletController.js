@@ -3,7 +3,7 @@ import Wallet from "../models/Wallet.js";
 // Get wallet details (balance + transactions) by user ID
 export const getWalletByUser = async (req, res) => {
   try {
-    const userId = req.params.userId;
+    const userId = req.userId;
 
     const wallet = await Wallet.findOne({ user: userId });
     if (!wallet) {
@@ -31,7 +31,7 @@ export const getWalletByUser = async (req, res) => {
 // Add money to wallet (deposit)
 export const addFunds = async (req, res) => {
   try {
-    const userId = req.params.userId;
+    const userId = req.userId;
     const { amount } = req.body;
 
     if (!amount || amount <= 0) {
@@ -77,7 +77,7 @@ export const addFunds = async (req, res) => {
 // Withdraw money from wallet
 export const withdrawFunds = async (req, res) => {
   try {
-    const userId = req.params.userId;
+    const userId = req.userId;
     const { amount } = req.body;
 
     if (!amount || amount <= 0) {
