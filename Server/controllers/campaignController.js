@@ -24,9 +24,6 @@ export const createCampaign = async (req, res) => {
           req.body;
         
         const userId = req.userId;
-        if (!userId) {
-          return res.status(401).json({ message: "Unauthorized user" });
-        }
 
         // Validate required fields if needed (or rely on Mongoose validation)
         if (!title || !description || !targetAmount || !deadline || !category) {
@@ -40,7 +37,7 @@ export const createCampaign = async (req, res) => {
         });
         if (existingCampaign) {
           return res.status(400).json({
-            message: "Campaign already exists with the same title and user",
+            message: "You already have a campaign with this title",
           });
         }
 

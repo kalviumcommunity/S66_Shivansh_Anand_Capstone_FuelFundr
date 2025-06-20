@@ -90,6 +90,13 @@ export const loginUser = async (req, res) => {
         .json({ success: false, message: "Invalid email or password" });
     }
 
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ 
+      success: false, 
+      message: "Server configuration error" 
+      });
+  }
+
     // Generate JWT token
     const token=jwt.sign(
       { id: user._id },
