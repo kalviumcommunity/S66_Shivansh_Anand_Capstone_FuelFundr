@@ -5,10 +5,13 @@ import campaignRoutes from "./routes/campaignRoutes.js";
 import walletRoutes from "./routes/walletRoutes.js";
 import connectDB from "./config/db.js";
 import { apiLimiter } from "./middlewares/rateLimiter.js";
+import cookieParser from "cookie-parser";
 
 configDotenv();
 const app = express();
 app.use(express.json());
+app.use(cookieParser()); 
+
 const PORT = process.env.PORT || 2727;
 
 connectDB();

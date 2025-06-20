@@ -5,11 +5,12 @@ import {
   getWalletByUser,
 } from "../controllers/walletController.js";
 import { walletLimiter } from "../middlewares/rateLimiter.js";
+import protect from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/:userId", getWalletByUser);
-router.post("/:userId/add", walletLimiter, addFunds);
-router.post("/:userId/withdraw", walletLimiter, withdrawFunds);
+router.get("/me", protect, getWalletByUser);
+router.post("/me/add", protect, walletLimiter, addFunds);
+router.post("/me/withdraw", protect, walletLimiter, withdrawFunds);
 
 export default router;

@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import Wallet from "../models/Wallet.js";
+import jwt from "jsonwebtoken";
 
 export const registerUser = async (req, res) => {
   try {
@@ -89,6 +90,21 @@ export const loginUser = async (req, res) => {
         .json({ success: false, message: "Invalid email or password" });
     }
 
+    // Generate JWT token
+    const token=jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRE || "7d" }
+    );
+
+     // Set cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict", // or "Strict"/"None" depending on frontend/backend setup
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days in ms
+    });
+
     res.status(200).json({
       success: true,
       message: "Login successful",
@@ -121,3 +137,18 @@ export const getAllUsers = async (req, res) => {
     });
   }
 };
+
+export const logoutUser = (req, res) => {
+  res.cookie("token", "", {
+    httpOnly: true,
+    expires: new Date(0),
+    sameSite: "strict", // match sameSite with login
+    secure: process.env.NODE_ENV === "production",
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Logged out successfully",
+  });
+};
+
