@@ -1,0 +1,17 @@
+meta {
+  name: WithdrawFunds
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://localhost:2727/api/wallet/me/withdraw
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "amount":1000
+  }
+}

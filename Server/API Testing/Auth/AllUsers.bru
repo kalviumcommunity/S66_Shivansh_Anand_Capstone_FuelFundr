@@ -1,0 +1,11 @@
+meta {
+  name: AllUsers
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://localhost:2727/api/auth/users
+  body: none
+  auth: inherit
+}

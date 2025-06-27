@@ -1,0 +1,11 @@
+meta {
+  name: CheckBalance
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://localhost:2727/api/wallet/me
+  body: none
+  auth: inherit
+}
