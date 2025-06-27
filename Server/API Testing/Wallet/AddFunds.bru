@@ -1,0 +1,17 @@
+meta {
+  name: AddFunds
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:2727/api/wallet/me/add
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "amount":50000
+  }
+}

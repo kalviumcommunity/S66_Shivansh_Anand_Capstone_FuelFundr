@@ -1,0 +1,11 @@
+meta {
+  name: LogoutUser
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:2727/api/auth/logout
+  body: json
+  auth: inherit
+}

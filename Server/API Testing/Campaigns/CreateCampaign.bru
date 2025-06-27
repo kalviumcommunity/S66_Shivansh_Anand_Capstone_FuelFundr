@@ -1,0 +1,25 @@
+meta {
+  name: CreateCampaign
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:2727/api/campaigns/create
+  body: multipartForm
+  auth: inherit
+}
+
+body:json {
+  {
+    
+  }
+}
+
+body:multipart-form {
+  title: Gen AI Startup @contentType(string)
+  description: A startup to work towards better AI gen tools and platforms. @contentType(string)
+  targetAmount: 2000 @contentType(number)
+  deadline: 2025-08-01T00:00:00.000Z
+  category: Startup @contentType(string)
+}
